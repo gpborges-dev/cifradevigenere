@@ -1,6 +1,7 @@
 import re
 
 alfabeto = 'abcdefghijklmnopqrstuvwxyz';
+alfatonum = dict(zip(alfabeto, range(len(alfabeto))));
 
 stats_port = {
     'a': 0.1463,
@@ -81,22 +82,19 @@ def calc_stats(msg: str):
 
 def descobre_mensagem(criptograma, eh_portugues = False):
     stats = calc_stats(criptograma)
-    stats_cript = [s[0] for s in sorted(stats.items(), key=lambda item: item[1], reverse=True)]
-    print(stats_cript)
+    stats_script = sorted(stats.keys(), key=stats.get, reverse=True)
+    print(stats_script)
 
     lang = stats_port if eh_portugues else stats_ing
-    stats_lang = [s[0] for s in sorted(lang.items(), key=lambda item: item[1], reverse=True)]
+    stats_lang = sorted(lang.keys(), key=lang.get, reverse=True)
     print(stats_lang)
 
-    alf_dict = dict(zip(stats_cript, stats_lang))
+    alf_dict = dict(zip(stats_script, stats_lang))
     print(alf_dict)
     # print(criptograma)
     msg = ''.join([alf_dict[c] for c in criptograma])
 
     return msg
-    
-
-
 
 def cifrador(msg: str, key):
     format_msg = format_str(msg)
@@ -110,8 +108,6 @@ def cifrador(msg: str, key):
         k_index = alfabeto.find(key_ext[i])
         criptograma += alfabeto[(c_index + k_index) % len(alfabeto)];
     
-    
-
     return criptograma
 
 
@@ -128,27 +124,47 @@ def decifrador(criptograma, key):
     
     return msg
 
-def ataque(criptograma):
-    return
+def key_size(criptograma):
+    # print(criptograma)
+    cript_num = [alfatonum[c] for c in criptograma];
+    # print(cript_num)
+    freq_matrix = [];
+    for i in range(1, len(criptograma)//3):
+    # for i in range(1, len(criptograma)):
+        freq_matrix.append([-1]*i + cript_num[:-i])
+
+    rows_freq = [0];
+    for cript in freq_matrix:
+        freq = 0
+        for n, letter in enumerate(cript):
+            if letter == cript_num[n]:
+                freq += 1
+        rows_freq.append(freq)
+
+    print(rows_freq)
+
+    return freq_matrix;
 
 
 msg_ing = "Something é é à ô that is impossible cannot be done or cannot happen.It was impossible for anyone to get in because no one knew the password. He thinks the tax is impossible to administer. You shouldn't promise what's impossible. Keller is good at describing music–an almost impossible task to do well. Synonyms: unachievable, hopeless, out of the question, vain   More Synonyms of impossibleThe impossible is something which is impossible.They were expected to do the impossible. No one can achieve the impossible."
 encoded = cifrador(msg_ing, 'ketchup')
-decoded = decifrador(encoded, 'ketchup')
-descoberta = descobre_mensagem(encoded)
+# encoded = cifrador('teste', 'ketchup')
+print(key_size(encoded))
+# decoded = decifrador(encoded, 'ketchup')
+# descoberta = descobre_mensagem(encoded)
 
-print('-' * 30)
-print('encoded ' + encoded)
-print('-' * 30)
-print('descobre_mensagem ' + descoberta);
-print('-' * 30)
-print('decoded ' + decoded)
-print('-' * 30)
+# print('-' * 30)
+# print('encoded ' + encoded)
+# print('-' * 30)
+# print('descobre_mensagem ' + descoberta);
+# print('-' * 30)
+# print('decoded ' + decoded)
+# print('-' * 30)
 
 
 
-msg_port = 'quenaoseconseguefazermuitodificildeconseguirmissaoimpossiveldeocorrencingiaouexistenciaexageradamentedificileimprovavelinviaveleimpossivelencontrardinheiroemarvoresquesedistanciadarealidadeirrealdesejoimpossivelcontrarioarazaosemsentidoracionalabsurdotravessiaimpossivelquenaoseconseguesuportarinsuportavelotrabalhoficouimpossivelnaempresa'
-msg_ing = 'somethingthatisimpossiblecannotbedoneorcannothappenitwasimpossibleforanyonetogetinbecausenooneknewthepasswordhethinksthetaxisimpossibletoadministeryoushouldntpromisewhatsimpossiblekellerisgoodatdescribingmusicanalmostimpossibletasktodowellsynonymsunachievablehopelessoutofthequestionvainmoresynonymsofimpossibletheimpossibleissomethingwhichisimpossibletheywereexpectedtodotheimpossiblenoonecanachievetheimpossible'
+# msg_port = 'quenaoseconseguefazermuitodificildeconseguirmissaoimpossiveldeocorrencingiaouexistenciaexageradamentedificileimprovavelinviaveleimpossivelencontrardinheiroemarvoresquesedistanciadarealidadeirrealdesejoimpossivelcontrarioarazaosemsentidoracionalabsurdotravessiaimpossivelquenaoseconseguesuportarinsuportavelotrabalhoficouimpossivelnaempresa'
+# msg_ing = 'somethingthatisimpossiblecannotbedoneorcannothappenitwasimpossibleforanyonetogetinbecausenooneknewthepasswordhethinksthetaxisimpossibletoadministeryoushouldntpromisewhatsimpossiblekellerisgoodatdescribingmusicanalmostimpossibletasktodowellsynonymsunachievablehopelessoutofthequestionvainmoresynonymsofimpossibletheimpossibleissomethingwhichisimpossibletheywereexpectedtodotheimpossiblenoonecanachievetheimpossible'
 
 
 
