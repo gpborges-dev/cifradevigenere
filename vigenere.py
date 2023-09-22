@@ -1,7 +1,10 @@
+import numpy as np
 import re
 
 alfabeto = 'abcdefghijklmnopqrstuvwxyz';
 alfatonum = dict(zip(alfabeto, range(len(alfabeto))));
+
+cutoff_factor = 2
 
 stats_port = {
     'a': 0.1463,
@@ -61,17 +64,20 @@ stats_ing = {
     'z': 0.00074,
 }
 
+
 def remover_acentos(input_str):
     acentos = {'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', 'ã':'a', 'õ':'o', 'â':'a', 'ê':'e', 'ô':'o', 'à':'a', 'ç':'c'}
     return ''.join(acentos[i] if i in acentos else i for i in input_str)
+
 
 def format_str(msg):
     format_str = remover_acentos(msg.lower())
     return re.sub(r'[^a-z]', '', format_str);
 
+
 def calc_stats(msg: str):
     format_msg = format_str(msg)
-    stats = { l: 0 for l in alfabeto }
+    stats = { l: float(0) for l in alfabeto }
     for c in format_msg:
         stats[c] += 1
 
@@ -80,21 +86,6 @@ def calc_stats(msg: str):
 
     return stats
 
-def descobre_mensagem(criptograma, eh_portugues = False):
-    stats = calc_stats(criptograma)
-    stats_script = sorted(stats.keys(), key=stats.get, reverse=True)
-    print(stats_script)
-
-    lang = stats_port if eh_portugues else stats_ing
-    stats_lang = sorted(lang.keys(), key=lang.get, reverse=True)
-    print(stats_lang)
-
-    alf_dict = dict(zip(stats_script, stats_lang))
-    print(alf_dict)
-    # print(criptograma)
-    msg = ''.join([alf_dict[c] for c in criptograma])
-
-    return msg
 
 def cifrador(msg: str, key):
     format_msg = format_str(msg)
@@ -124,13 +115,11 @@ def decifrador(criptograma, key):
     
     return msg
 
-def key_size(criptograma):
-    # print(criptograma)
+
+def find_key_size(criptograma):
     cript_num = [alfatonum[c] for c in criptograma];
-    # print(cript_num)
     freq_matrix = [];
-    for i in range(1, len(criptograma)//3):
-    # for i in range(1, len(criptograma)):
+    for i in range(1, len(criptograma)):
         freq_matrix.append([-1]*i + cript_num[:-i])
 
     rows_freq = [0];
@@ -141,26 +130,59 @@ def key_size(criptograma):
                 freq += 1
         rows_freq.append(freq)
 
-    print(rows_freq)
+    rows_freq = np.array(rows_freq)
+    desvio = np.std(rows_freq)
+    media = np.mean(rows_freq)
+    cutoff = desvio * cutoff_factor
+    lsup = media + cutoff
+    lsup_outliers = np.where(rows_freq > lsup)[0]
 
-    return freq_matrix;
+    len_freqs = np.diff(lsup_outliers).tolist() # diff between each subsequent lsup_outliers
+    most_freq_len = max(set(len_freqs), key=len_freqs.count)
+
+    return most_freq_len
 
 
-msg_ing = "Something é é à ô that is impossible cannot be done or cannot happen.It was impossible for anyone to get in because no one knew the password. He thinks the tax is impossible to administer. You shouldn't promise what's impossible. Keller is good at describing music–an almost impossible task to do well. Synonyms: unachievable, hopeless, out of the question, vain   More Synonyms of impossibleThe impossible is something which is impossible.They were expected to do the impossible. No one can achieve the impossible."
-encoded = cifrador(msg_ing, 'ketchup')
-# encoded = cifrador('teste', 'ketchup')
-print(key_size(encoded))
-# decoded = decifrador(encoded, 'ketchup')
-# descoberta = descobre_mensagem(encoded)
+def find_key(criptograma, eh_portugues = False):
+    stats_lang = stats_port if eh_portugues else stats_ing
+    stats_lang = [stats_lang[l] for l in alfabeto]
 
-# print('-' * 30)
-# print('encoded ' + encoded)
-# print('-' * 30)
-# print('descobre_mensagem ' + descoberta);
-# print('-' * 30)
-# print('decoded ' + decoded)
-# print('-' * 30)
+    key_size = find_key_size(criptograma)
+    key = ''
+    for i in range(0, key_size):
+        subcript = criptograma[i::key_size]
+        stats_sub = calc_stats(subcript)
+        
+        max_accuracy, max_j = 0, 0
+        for j in range(len(alfabeto)):
+            shifted_alf = alfabeto[j:] + alfabeto[:j]
+            shifted_stats = [stats_sub[l] for l in shifted_alf]
+            result = sum([l * s for l, s in zip(stats_lang, shifted_stats)])
+            
+            if (result > max_accuracy):
+                max_accuracy, max_j = result, j
+        key += alfabeto[max_j]
+                
+    return key
 
+
+def print_prop(label, value, size=50):
+    print('{:=^{}}'.format(f' {label} ', size))
+    print(value)
+    print('=' * size)
+###################
+
+key = 'ketchup'
+msg_ing = "Something that is impossible cannot be done or cannot happen.It was impossible for anyone to get in because no one knew the password. He thinks the tax is impossible to administer. You shouldn't promise what's impossible. Keller is good at describing music–an almost impossible task to do well. Synonyms: unachievable, hopeless, out of the question, vain   More Synonyms of impossibleThe impossible is something which is impossible.They were expected to do the impossible. No one can achieve the impossible."
+encoded = cifrador(msg_ing, key)
+found_key = find_key(encoded)
+found_decoded = decifrador(encoded, found_key)
+
+print_prop('CHAVE', key)
+print_prop('MENSAGEM ORIGINAL', msg_ing)
+print_prop('MENSAGEM CIFRADA', encoded)
+print_prop('CHAVE DESCOBERTA', found_key)
+print_prop('MENSAGEM DESCOBERTA', found_decoded)
 
 
 # msg_port = 'quenaoseconseguefazermuitodificildeconseguirmissaoimpossiveldeocorrencingiaouexistenciaexageradamentedificileimprovavelinviaveleimpossivelencontrardinheiroemarvoresquesedistanciadarealidadeirrealdesejoimpossivelcontrarioarazaosemsentidoracionalabsurdotravessiaimpossivelquenaoseconseguesuportarinsuportavelotrabalhoficouimpossivelnaempresa'
