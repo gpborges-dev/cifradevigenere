@@ -72,7 +72,19 @@ def remover_acentos(input_str):
 
 def format_str(msg):
     format_str = remover_acentos(msg.lower())
-    return re.sub(r'[^a-z]', '', format_str);
+    return re.sub(r'[^a-z]', '', format_str)
+
+
+def deformat_str(original, formated):
+    index = 0
+    result = ''
+    for l in original.lower():
+        if l in alfabeto:
+            result += formated[index]
+            index += 1
+        else:
+            result += l
+    return result
 
 
 def calc_stats(msg: str):
@@ -89,40 +101,41 @@ def calc_stats(msg: str):
 
 def cifrador(msg: str, key):
     format_msg = format_str(msg)
-    key_ext = key;
+    key_ext = key
     while (len(format_msg) > len(key_ext)):
-        key_ext += key;
+        key_ext += key
 
-    criptograma = '';
+    criptograma = ''
     for i, c in enumerate(format_msg):
         c_index = alfabeto.find(c)
         k_index = alfabeto.find(key_ext[i])
-        criptograma += alfabeto[(c_index + k_index) % len(alfabeto)];
+        criptograma += alfabeto[(c_index + k_index) % len(alfabeto)]
     
-    return criptograma
+    return deformat_str(msg, criptograma)
 
 
 def decifrador(criptograma, key):
-    key_ext = key;
-    while (len(criptograma) > len(key_ext)):
-        key_ext += key;
+    format_cript = format_str(criptograma)
+    key_ext = key
+    while (len(format_cript) > len(key_ext)):
+        key_ext += key
     
-    msg = '';
-    for i, c in enumerate(criptograma):
+    msg = ''
+    for i, c in enumerate(format_cript):
         c_index = alfabeto.find(c)
         k_index = alfabeto.find(key_ext[i])
-        msg += alfabeto[(c_index - k_index) % len(alfabeto)];
+        msg += alfabeto[(c_index - k_index) % len(alfabeto)]
     
-    return msg
-
+    return deformat_str(criptograma, msg)
 
 def find_key_size(criptograma):
-    cript_num = [alfatonum[c] for c in criptograma];
-    freq_matrix = [];
-    for i in range(1, len(criptograma)):
+    format_cript = format_str(criptograma)
+    cript_num = [alfatonum[c] for c in format_cript]
+    freq_matrix = []
+    for i in range(1, len(format_cript)):
         freq_matrix.append([-1]*i + cript_num[:-i])
 
-    rows_freq = [0];
+    rows_freq = [0]
     for cript in freq_matrix:
         freq = 0
         for n, letter in enumerate(cript):
@@ -144,13 +157,14 @@ def find_key_size(criptograma):
 
 
 def find_key(criptograma, eh_portugues = False):
+    format_cript = format_str(criptograma)
     stats_lang = stats_port if eh_portugues else stats_ing
     stats_lang = [stats_lang[l] for l in alfabeto]
 
-    key_size = find_key_size(criptograma)
+    key_size = find_key_size(format_cript)
     key = ''
     for i in range(0, key_size):
-        subcript = criptograma[i::key_size]
+        subcript = format_cript[i::key_size]
         stats_sub = calc_stats(subcript)
         
         max_accuracy, max_j = 0, 0
@@ -174,13 +188,15 @@ def print_prop(label, value, size=50):
 
 key = 'ketchup'
 msg_ing = "Something that is impossible cannot be done or cannot happen.It was impossible for anyone to get in because no one knew the password. He thinks the tax is impossible to administer. You shouldn't promise what's impossible. Keller is good at describing music–an almost impossible task to do well. Synonyms: unachievable, hopeless, out of the question, vain   More Synonyms of impossibleThe impossible is something which is impossible.They were expected to do the impossible. No one can achieve the impossible."
+# msg_ing = "Five score years ago, a great American, in whose symbolic shadow we stand today, signed the Emancipation Proclamation. This momentous decree came as a great beacon light of hope to millions of Negro slaves who had been seared in the flames of withering injustice. It came as a joyous daybreak to end the long night of their captivity.But 100 years later, the Negro still is not free. One hundred years later, the life of the Negro is still sadly crippled by the manacles of segregation and the chains of discrimination. One hundred years later, the Negro lives on a lonely island of poverty in the midst of a vast ocean of material prosperity. One hundred years later the Negro is still languished in the corners of American society and finds himself in exile in his own land. And so we've come here today to dramatize a shameful condition. In a sense we've come to our nation's capital to cash a check.When the architects of our republic wrote the magnificent words of the Constitution and the Declaration of Independence, they were signing a promissory note to which every American was to fall heir. This note was a promise that all men — yes, Black men as well as white men — would be guaranteed the unalienable rights of life, liberty and the pursuit of happiness.It is obvious today that America has defaulted on this promissory note insofar as her citizens of color are concerned. Instead of honoring this sacred obligation, America has given the Negro people a bad check, a check which has come back marked insufficient funds."
 encoded = cifrador(msg_ing, key)
+decoded = decifrador(encoded, key)
 found_key = find_key(encoded)
 found_decoded = decifrador(encoded, found_key)
 
 print_prop('CHAVE', key)
-print_prop('MENSAGEM ORIGINAL', msg_ing)
 print_prop('MENSAGEM CIFRADA', encoded)
+print_prop('MENSAGEM DECIFRADA', decoded)
 print_prop('CHAVE DESCOBERTA', found_key)
 print_prop('MENSAGEM DESCOBERTA', found_decoded)
 
