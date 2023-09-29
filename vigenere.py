@@ -146,8 +146,10 @@ def find_key_size(criptograma):
     lsup_outliers = np.where(rows_freq > lsup)[0]
 
     len_freqs = np.diff(lsup_outliers).tolist() # diff between each subsequent lsup_outliers
-    most_freq_len = max(set(len_freqs), key=len_freqs.count)
+    if len(len_freqs) == 0:
+        return len(format_cript)
 
+    most_freq_len = max(set(len_freqs), key=len_freqs.count)
     return most_freq_len
 
 def find_key(criptograma, idioma = 'i'):
