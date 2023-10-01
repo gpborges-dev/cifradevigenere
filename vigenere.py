@@ -126,12 +126,12 @@ def decifrador(criptograma, key):
 def find_key_size(criptograma):
     format_cript = format_str(criptograma)
     cript_num = [alfatonum[c] for c in format_cript]
-    freq_matrix = []
+    shift_matrix = []
     for i in range(1, len(format_cript)):
-        freq_matrix.append([-1]*i + cript_num[:-i])
+        shift_matrix.append([-1]*i + cript_num[:-i])
 
     rows_freq = [0]
-    for cript in freq_matrix:
+    for cript in shift_matrix:
         freq = 0
         for n, letter in enumerate(cript):
             if letter == cript_num[n]:
